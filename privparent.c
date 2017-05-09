@@ -126,8 +126,9 @@ static void privop_port_get_data_sock(session_t *sess)
 
 static void privop_pasv_active(session_t *sess)
 {
+	//根据监听套接字是否为1，判断是不是处于pasv模式
 	int active;
-	if (sess->pasv_listen_fd != -1)
+	if (sess->pasv_listen_fd != -1)//监听套接字
 		active = 1;
 	else
 		active = 0;
@@ -150,7 +151,7 @@ static void privop_pasv_listen(session_t *sess)
 	priv_sock_send_int(sess->nobody_fd, (int)port);
 }
 
-
+//接受连接，并把连接的fd发送给ftp服务进程
 static void privop_pasv_accept(session_t *sess)
 {
 	// 因为服务器端给出的端口是随机的，accept 返回数据套接字关联的端口是进程独立的
