@@ -48,8 +48,9 @@ void minimize_privilege(void)
 	
 	__u32 cap_mask = 0;
 	cap_mask |= (1 << CAP_NET_BIND_SERVICE);
-	cap_data.effective = cap_data.permitted = cap_mask;
-	cap_data.inheritable = 0;
+    cap_data.effective = cap_mask;//类似于权限的集合  
+    cap_data.permitted = cap_mask;//0001000000  
+    cap_data.inheritable = 0;//子进程不继承特权  
 
 	capset(&cap_header, &cap_data);
 }
@@ -86,6 +87,8 @@ void handle_parent(session_t *sess)
 	}
 }
 
+//根据发送过来的客户端ip和端口号，绑定20端口并与客户端连接，
+//此时的C端为ftp服务进程，S端为客户端。
 static void privop_port_get_data_sock(session_t *sess)
 {
 	//先获取ip和端口号
@@ -109,21 +112,21 @@ static void privop_port_get_data_sock(session_t *sess)
 		priv_sock_send_result(sess->nobody_fd, PRIV_SOCK_RESULT_BAD);
 		return;
 	}
-
+//连接
 	if (connect_timeout(fd, &addr, tunable_connect_timeout) < 0)
 	{
 		close(fd);
 		priv_sock_send_result(sess->nobody_fd, PRIV_SOCK_RESULT_BAD);
 		return;
 	}
-
+//发送结果和fd给ftp协议解析进程
 	priv_sock_send_result(sess->nobody_fd, PRIV_SOCK_RESULT_OK);
 	priv_sock_send_fd(sess->nobody_fd, fd);
 	close(fd); //父进程必须close(fd)，否则子进程关闭close(data_fd)的时候也不会发送FIN段。
 	//因为通过unix域协议传递套接字等于是对方也打开套接字，而直接简单的赋值是没有这样的效果的。
-
 }
 
+//判断是不是处于pasv模式
 static void privop_pasv_active(session_t *sess)
 {
 	//根据监听套接字是否为1，判断是不是处于pasv模式
@@ -135,6 +138,8 @@ static void privop_pasv_active(session_t *sess)
 	priv_sock_send_int(sess->nobody_fd, active);
 }
 
+//启动一个服务端进行监听，并把监听的端口发送个ftp协议解析进程
+//因为该进程能够获得本地ip地址，所以只需发送端口号即可
 static void privop_pasv_listen(session_t *sess)
 {
 	char ip[20] = {0};
@@ -152,9 +157,11 @@ static void privop_pasv_listen(session_t *sess)
 }
 
 //接受连接，并把连接的fd发送给ftp服务进程
+//返回连接的结果和fd给ftp服务进程
 static void privop_pasv_accept(session_t *sess)
 {
 	// 因为服务器端给出的端口是随机的，accept 返回数据套接字关联的端口是进程独立的
+	//在上一步listen时，已经保存了listen_fd，所以直接连接即可
 	int fd = accept_timeout(sess->pasv_listen_fd, NULL, tunable_accept_timeout);
 	close(sess->pasv_listen_fd);
 	sess->pasv_listen_fd = -1;

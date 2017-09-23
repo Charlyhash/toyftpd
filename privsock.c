@@ -48,7 +48,7 @@ void priv_sock_set_child_context(session_t *sess)
 	}		
 }
 
-//发送命令，命令在头文件中以宏的形式定义为1，2，3，4这四种
+//发送命令（子->父），命令在头文件中以宏的形式定义为1，2，3，4这四种
 //发送一个char就可以了
 void priv_sock_send_cmd(int fd, char cmd)
 {
@@ -60,7 +60,7 @@ void priv_sock_send_cmd(int fd, char cmd)
 	}
 }
 
-//接收命令
+//接收命令（父<-子）
 char priv_sock_get_cmd(int fd)
 {
 	char res;

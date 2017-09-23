@@ -297,7 +297,7 @@ int get_transfer_fd(session_t* sess)
 //得到port模式的fd
 int get_port_fd(session_t* sess)
 {
-		priv_sock_send_cmd(sess->ftp_fd, PRIV_SOCK_GET_DATA_SOCK);
+	priv_sock_send_cmd(sess->ftp_fd, PRIV_SOCK_GET_DATA_SOCK);
 	unsigned short port = ntohs(sess->p_sock->sin_port);
 	char *ip = inet_ntoa(sess->p_sock->sin_addr);
 	priv_sock_send_int(sess->ftp_fd, (int)port);
